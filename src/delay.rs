@@ -42,9 +42,14 @@ impl CircularBuffer {
     }
 }
 
-fn seconds_to_samples(seconds: f32, sample_rate: u32) -> f32 {
-    sample_rate as f32 * seconds
-}
+// Note that unlike read-only signal generators, effects with an internal 
+// CircularBuffer do manage their internal buffer, instead of reading from a
+// referenced wavetable, and they also combine incrementing and reading 
+// operations. The internal buffer is managed because access to the write index
+// is necessary for reading, and it's not useful to have multiple actors writing
+// into a CircularBuffer. Reading and incrementing (i.e. writing) actions are
+// combined becuase the input value to the write operation depends on the 
+// previous write operation whenever feedback designs are used.
 
 // SimpleDelay manages its own buffer
 pub struct SimpleDelay {
@@ -67,4 +72,23 @@ impl SimpleDelay {
     }
 }
 
-pub struct DelayTap(pub f32, pub f32);
+//pub struct DelayTap(pub f32, pub f32);
+
+//pub struct UberDelay {
+    //input_buffer: CircularBuffer,
+    //capture_buffer: CircularBuffer,
+//}
+
+//impl UberDelay {
+    //pub fn new(buffer_size: usize) -> UberDelay {
+        //UberDelay {
+            //input_buffer: CircularBuffer::new(buffer_size),
+            //capture_buffer: CircularBuffer::new(buffer_size),
+        //}
+    //}
+    //// TODO: we need to recieve lots of params here and generate the multitap output
+    //// TODO: Create functions to make delay taps.
+    //pub fn tick(input_sample: f32, delay_taps: Vec<DelayTap>, feedback_amount: f32, pattern_length:f32) -> f32 {
+        //1.0
+    //}
+//}

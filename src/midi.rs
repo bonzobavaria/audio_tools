@@ -1,3 +1,8 @@
+// Create a table of MIDI note frequencies and store it in memory. Frequencies 
+// are accessed from the table by index, which is the desired MIDI note. For
+// example, notes[64] = 329.62..., which is the frequency at C4.
+//
+// See: http://subsynth.sourceforge.net/midinote2freq.html
 pub fn make_midi_freq_table() -> Vec<f32> {
     let notes: Vec<f32> = vec![
         8.1757989156,

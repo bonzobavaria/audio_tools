@@ -1,7 +1,8 @@
-use std::f32::consts::PI;
 use std::f32::consts::E;
+use std::f32::consts::PI;
 
-const TWO_PI: f32 = 2.0 * PI;
+// TODO: Figure out how to import this from the constants module.
+pub const TWO_PI: f32 = 2.0 * PI;
 
 type Wavetable = Vec<f32>;
 
@@ -24,8 +25,12 @@ pub fn make_exp_envelope(table_size: usize) -> Wavetable {
 
 pub fn make_sine_table(table_size: usize) -> Wavetable {
     make_fourier_table_norm(
-        table_size, 
-        vec![Partial { freq: 1.0, amp: 1.0, phase: 0.0, }]
+        table_size,
+        vec![Partial {
+            freq: 1.0,
+            amp: 1.0,
+            phase: 0.0,
+        }],
     )
 }
 
@@ -54,7 +59,9 @@ fn make_square_partials(num_partials: usize) -> Vec<Partial> {
     let mut partials = Vec::new();
     for index in 1..num_partials {
         // Even partials are not present in a square wave
-        if index % 2 == 0 { continue; }
+        if index % 2 == 0 {
+            continue;
+        }
         let partial = Partial {
             freq: index as f32,
             amp: 1.0 / index as f32,
@@ -65,9 +72,13 @@ fn make_square_partials(num_partials: usize) -> Vec<Partial> {
     partials.clone()
 }
 
+// This function combines creating a wavetable from a list of Partials, and
+// normalizing the output vector so it's maximum absolute value is 1.0. These
+// operations are combined here for computational efficiency.
 pub fn make_fourier_table_norm(table_size: usize, partials: Vec<Partial>) -> Wavetable {
     let mut wavetable: Vec<f32> = Vec::new();
-    // Track maximum amplitude while creating wavetable for normalization 
+    // Track maximum amplitude while creating wavetable, since we need to know
+    // that to be able to normalize the wavetable.
     let mut maximum_amplitude = 0.0;
     let ts: f32 = 1.0 / table_size as f32;
     for i in 0..table_size {
@@ -76,7 +87,9 @@ pub fn make_fourier_table_norm(table_size: usize, partials: Vec<Partial>) -> Wav
             let angle = TWO_PI * partial.freq * i as f32 * ts + partial.phase;
             sample += angle.sin() * partial.amp;
         }
-        if sample.abs() > maximum_amplitude { maximum_amplitude = sample.abs(); }
+        if sample.abs() > maximum_amplitude {
+            maximum_amplitude = sample.abs();
+        }
         wavetable.push(sample);
     }
     // Apply normalization to the generated wavetable by multiplying every
@@ -88,4 +101,3 @@ pub fn make_fourier_table_norm(table_size: usize, partials: Vec<Partial>) -> Wav
     // Return the generated wavetable
     wavetable.clone()
 }
-
