@@ -1,14 +1,4 @@
 #[derive(Clone)]
-pub struct TabReader {
-    pub active: bool,
-    pub wt_increment: f32,
-    pub wt_position: f32,
-    pub frequency: f32,
-    pub sample_rate: u32,
-    table_size: usize,
-}
-
-#[derive(Clone)]
 enum Stage {
     Attack,
     Release,
@@ -27,47 +17,10 @@ pub struct EnvReader {
     wt_position: f32,
 }
 
-fn freq_to_wt_inc(freq: f32, table_size: usize, sample_rate: u32) -> f32 {
-    table_size as f32 / sample_rate as f32 * freq
-}
-
 // seconds to samples or wavetable increment amount is just the inverse of
 // frequency.
 fn seconds_to_wt_inc(seconds: f32, table_size: usize, sample_rate: u32) -> f32 {
     table_size as f32 / sample_rate as f32 * (1.0 / seconds)
-}
-
-impl TabReader {
-    pub fn new(
-        table_size: usize, 
-        sample_rate: u32,
-    ) -> TabReader {
-        TabReader {
-            active: false,
-            frequency: 0.0,
-            sample_rate,
-            table_size,
-            wt_increment: 0.0,
-            wt_position: 0.0,
-        }
-    }
-    pub fn read(&self, table: &Vec<f32>) -> f32 {
-        table[self.wt_position as usize]
-    }
-    pub fn increment(&mut self) {
-        self.wt_position += self.wt_increment;
-        self.wt_position %= self.table_size as f32;
-    }
-    pub fn update_frequency(&mut self, next_frequency: f32) {
-        self.frequency = next_frequency;
-        self.wt_increment = 
-            freq_to_wt_inc(self.frequency, self.table_size, self.sample_rate);
-    }
-    pub fn update_sample_rate(&mut self, next_sample_rate: u32) {
-        self.sample_rate = next_sample_rate;
-        self.wt_increment =
-            freq_to_wt_inc(self.frequency, self.table_size, self.sample_rate);
-    }
 }
 
 impl EnvReader {
@@ -139,4 +92,3 @@ impl EnvReader {
         //);
     }
 }
-
