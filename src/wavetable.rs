@@ -14,19 +14,24 @@ pub struct Partial {
 // Table generators
 
 pub fn make_sin_saw_table(table_size: usize, num_partials: usize) -> Vec<Wavetable> {
-    let partial_sets: Vec<Vec<Partial>> = vec![
-        vec![Partial { freq: 1.0, amp: 1.0, phase: 0.0 }],
-        make_triangle_partials(num_partials),
-        make_square_partials(num_partials),
-        make_sawtooth_partials(num_partials),
-    ];
+    make_wavetable(
+        table_size, 
+        vec![
+            vec![Partial { freq: 1.0, amp: 1.0, phase: 0.0 }],
+            make_triangle_partials(num_partials),
+            make_square_partials(num_partials),
+            make_sawtooth_partials(num_partials),
+        ]
+    )
+}
+
+pub fn make_wavetable(table_size: usize, partial_sets: Vec<Vec<Partial>>) -> Vec<Wavetable> {
     partial_sets
         .into_iter()
         .map(|pset| make_fourier_table_norm(table_size, pset))
         .collect()
 }
 
-// TODO: Take a curve shape (such as E, 2.0, or 0.333) as argument for curve shape.
 pub fn make_exp_envelope(table_size: usize, curve: f32) -> Wavetable {
     let mut wavetable: Vec<f32> = Vec::new();
     let ts: f32 = 1.0 / table_size as f32;
@@ -34,7 +39,7 @@ pub fn make_exp_envelope(table_size: usize, curve: f32) -> Wavetable {
         let sample: f32 = f32::powf(i as f32 * ts, curve);
         wavetable.push(sample);
     }
-    wavetable.clone()
+    wavetable
 }
 
 // Partial generators
@@ -55,7 +60,7 @@ fn make_triangle_partials(num_partials: usize) -> Vec<Partial> {
         };
         partials.push(partial);
     }
-    partials.clone()
+    partials
 }
 
 fn make_square_partials(num_partials: usize) -> Vec<Partial> {
@@ -72,7 +77,7 @@ fn make_square_partials(num_partials: usize) -> Vec<Partial> {
         };
         partials.push(partial);
     }
-    partials.clone()
+    partials
 }
 
 fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
@@ -86,7 +91,7 @@ fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
         };
         partials.push(partial);
     }
-    partials.clone()
+    partials
 }
 
 
@@ -117,5 +122,5 @@ pub fn make_fourier_table_norm(table_size: usize, partials: Vec<Partial>) -> Wav
         *sample *= scale_factor;
     }
     // Return the generated wavetable
-    wavetable.clone()
+    wavetable
 }
