@@ -1,8 +1,6 @@
 use std::f32::consts::E;
-use std::f32::consts::PI;
 
-// TODO: Figure out how to import this from the constants module.
-pub const TWO_PI: f32 = 2.0 * PI;
+use crate::constants::{TWO_PI};
 
 type Wavetable = Vec<f32>;
 
