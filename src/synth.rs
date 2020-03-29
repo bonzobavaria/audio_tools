@@ -1,12 +1,10 @@
+use std::f32::consts::E;
+
 use crate::delay::{SimpleDelay};
 use crate::envelope::{EnvReader};
 use crate::osc::{OscReader};
 use crate::wavetable;
 use crate::midi;
-
-const TABLE_SIZE: usize = 1024;
-// TODO: Don't use sample rate during initialization
-const SAMPLE_RATE: u32 = 44100;
 
 pub enum OscType {
     Sawtooth,
@@ -43,39 +41,34 @@ pub struct BasicSynth {
     envelope_reader: Vec<EnvReader>,
     envelope_attack: f32,
     envelope_release: f32,
+    envelope_table: Vec<f32>,
     midi_table: Vec<f32>,
     table_reader: Vec<OscReader>,
     volume: f32,
-    // Right now a voice info is just an f32 for the frequency of the voice.
-    // This could be expanded to contain more info.
     voice_info: Vec<NoteInfo>,
-    voice_output: Vec<f32>,
+    voice_output: f32,
     wavetable: Vec<Vec<f32>>,
     wavetable_index: usize,
 }
 
 impl BasicSynth {
     pub fn new() -> BasicSynth {
-        // TODO: Create a sine, tri, square, saw wavetable export from wavetable.
-        let sine_table = wavetable::make_sine_table(TABLE_SIZE);
-        let square_table = wavetable::make_square_table(TABLE_SIZE);
-        let saw_table = wavetable::make_sawtooth_table(TABLE_SIZE);
-        let exp_envelope_table = wavetable::make_exp_envelope(TABLE_SIZE);
         BasicSynth {
-            delay: SimpleDelay::new((SAMPLE_RATE * 2) as usize),
-            delay_length_samples: (SAMPLE_RATE as f32 * 0.25),
+            delay: SimpleDelay::new((44100 * 2) as usize),
+            // TODO: Let SimpleDelay convert seconds to samples
+            delay_length_samples: (44100 as f32 * 0.25),
             delay_feedback_amount: 0.7,
             delay_wetdry: 0.5,
-            envelope_reader: vec![EnvReader::new(); 128],
             envelope_attack: 0.01,
+            envelope_reader: vec![EnvReader::new(); 128],
             envelope_release: 0.5,
+            envelope_table: wavetable::make_exp_envelope(1024, E),
             midi_table: midi::make_midi_freq_table(),
             table_reader: vec![OscReader::new(); 128],
             volume: 0.5,
             voice_info: vec![NoteInfo::new(0.0, 0.0); 128],
-            voice_output: vec![0.0; 128],
-            // TODO: Don't store the envelope table with the oscs.
-            wavetable: vec![sine_table, square_table, saw_table, exp_envelope_table],
+            voice_output: 0.0,
+            wavetable: wavetable::make_sin_saw_table(1024, 24),
             wavetable_index: 0,
         }
     }
@@ -87,8 +80,6 @@ impl BasicSynth {
                 self.volume = f32::powf(value, 2.0);
             }
             Message::NoteOn(note, velocity) => {
-                // TODO: use velocity for notes by setting note amplitude, or doing
-                // something with env time.
                 let norm_velocity: f32 = velocity as f32 / 127.0;
                 let n = NoteInfo::new(self.midi_table[note as usize], norm_velocity);
                 self.voice_info[note as usize] = n;
@@ -98,9 +89,9 @@ impl BasicSynth {
                 match osctype {
                     // TODO: Implement triangle wave
                     OscType::Sine => { self.wavetable_index = 0; }
-                    OscType::Square => { self.wavetable_index = 1; }
-                    OscType::Sawtooth => { self.wavetable_index = 2; }
-                    _ => {} // Triangle not implemented
+                    OscType::Triangle => {self.wavetable_index = 1; }
+                    OscType::Square => { self.wavetable_index = 2; }
+                    OscType::Sawtooth => { self.wavetable_index = 3; }
                 }
             }
             Message::SetEnvAttack(value) => {
@@ -112,6 +103,7 @@ impl BasicSynth {
         }
     }
     pub fn tick(&mut self, sample_rate: u32) -> f32 {
+        self.voice_output = 0.0;
         // Increment readers if they have an active envelope. There is still
         // time to tweak the phase after this for FM or sync effects.
         for i in 0..self.table_reader.len() {
@@ -127,26 +119,23 @@ impl BasicSynth {
             }
         }
         // Read from signal generators and add to the voice output.
-        // TODO: Forget the voice output array, and use a single output.
         for i in 0..self.table_reader.len() {
             if self.envelope_reader[i].is_active {
-                self.voice_output[i] =
+                self.voice_output +=
                     self.table_reader[i]
                         .read(&self.wavetable[self.wavetable_index]) 
-                        * self.envelope_reader[i].read(&self.wavetable[3])
+                        * self.envelope_reader[i].read(&self.envelope_table)
                         * self.voice_info[i].velocity;
             }
         }
 
-        let voice_output: f32 = self.voice_output.iter().sum();
-
         let delay_output = self.delay.tick(
-            voice_output, 
+            self.voice_output, 
             self.delay_length_samples,
             self.delay_feedback_amount,
         );
 
-        (voice_output * (1.0 - self.delay_wetdry)
+        (self.voice_output * (1.0 - self.delay_wetdry)
         + (delay_output * self.delay_wetdry))
         * self.volume
     }

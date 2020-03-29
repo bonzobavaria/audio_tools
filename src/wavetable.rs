@@ -11,41 +11,46 @@ pub struct Partial {
     phase: f32,
 }
 
-pub fn make_exp_envelope(table_size: usize) -> Wavetable {
+// Table generators
+
+pub fn make_sin_saw_table(table_size: usize, num_partials: usize) -> Vec<Wavetable> {
+    let partial_sets: Vec<Vec<Partial>> = vec![
+        vec![Partial { freq: 1.0, amp: 1.0, phase: 0.0 }],
+        make_triangle_partials(num_partials),
+        make_square_partials(num_partials),
+        make_sawtooth_partials(num_partials),
+    ];
+    partial_sets
+        .into_iter()
+        .map(|pset| make_fourier_table_norm(table_size, pset))
+        .collect()
+}
+
+// TODO: Take a curve shape (such as E, 2.0, or 0.333) as argument for curve shape.
+pub fn make_exp_envelope(table_size: usize, curve: f32) -> Wavetable {
     let mut wavetable: Vec<f32> = Vec::new();
     let ts: f32 = 1.0 / table_size as f32;
     for i in 0..table_size {
-        let sample: f32 = f32::powf(i as f32 * ts, E);
+        let sample: f32 = f32::powf(i as f32 * ts, curve);
         wavetable.push(sample);
     }
     wavetable.clone()
 }
 
-pub fn make_sine_table(table_size: usize) -> Wavetable {
-    make_fourier_table_norm(
-        table_size,
-        vec![Partial {
-            freq: 1.0,
-            amp: 1.0,
-            phase: 0.0,
-        }],
-    )
-}
+// Partial generators
 
-pub fn make_sawtooth_table(table_size: usize) -> Wavetable {
-    make_fourier_table_norm(table_size, make_sawtooth_partials(24))
-}
-
-pub fn make_square_table(table_size: usize) -> Wavetable {
-    make_fourier_table_norm(table_size, make_square_partials(24))
-}
-
-fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
+fn make_triangle_partials(num_partials: usize) -> Vec<Partial> {
+    // A triangle wave contains only odd harmonics, with alternating signs.
     let mut partials = Vec::new();
     for index in 1..num_partials {
+        if index % 2 == 0 {
+            continue;
+        }
         let partial = Partial {
             freq: index as f32,
-            amp: 1.0 / index as f32,
+            amp: 
+                1.0 / usize::pow(index, 2) as f32 
+                * i32::pow(-1, index as u32 + 1) as f32,
             phase: 0.0,
         };
         partials.push(partial);
@@ -56,7 +61,7 @@ fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
 fn make_square_partials(num_partials: usize) -> Vec<Partial> {
     let mut partials = Vec::new();
     for index in 1..num_partials {
-        // Even partials are not present in a square wave
+        // A square wave contains only odd harmonics, with non-alternating signs.
         if index % 2 == 0 {
             continue;
         }
@@ -69,6 +74,21 @@ fn make_square_partials(num_partials: usize) -> Vec<Partial> {
     }
     partials.clone()
 }
+
+fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
+    // A sawtooth wave has energy at all harmonics, with alternating signs.
+    let mut partials = Vec::new();
+    for index in 1..num_partials {
+        let partial = Partial {
+            freq: index as f32,
+            amp: 1.0 / index as f32 * i32::pow(-1, index as u32 + 1) as f32,
+            phase: 0.0,
+        };
+        partials.push(partial);
+    }
+    partials.clone()
+}
+
 
 // This function combines creating a wavetable from a list of Partials, and
 // normalizing the output vector so it's maximum absolute value is 1.0. These
