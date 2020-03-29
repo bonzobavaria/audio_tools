@@ -28,8 +28,16 @@ impl OscReader {
             }
         }
     }
-    pub fn read(&self, table: &Vec<f32>) -> f32 {
-        table[(self.phase * table.len() as f32) as usize]
+    pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32 where 
+        F: Fn(f32, f32, f32) -> f32 {
+        let ex_phase = self.phase * table.len() as f32;
+        let index = ex_phase as usize;
+        let fraction = ex_phase - index as f32;
+        let mut next_index = index + 1; 
+        if next_index >= table.len() {
+            next_index = 0;
+        }
+        interpolate(table[index], table[next_index], fraction)
     }
     // TODO: memoize frequency, sample_rate, and calculate phase inc from that.
     pub fn increment(&mut self, freq: f32, sr: u32) {

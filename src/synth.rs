@@ -5,6 +5,7 @@ use crate::envelope::{EnvReader};
 use crate::osc::{OscReader};
 use crate::wavetable;
 use crate::midi;
+use crate::interpolation;
 
 pub enum OscType {
     Sawtooth,
@@ -123,7 +124,10 @@ impl BasicSynth {
             if self.envelope_reader[i].is_active {
                 self.voice_output +=
                     self.table_reader[i]
-                        .read(&self.wavetable[self.wavetable_index]) 
+                        .read(
+                            &self.wavetable[self.wavetable_index],
+                            interpolation::interpolate_linear,
+                            ) 
                         * self.envelope_reader[i].read(&self.envelope_table)
                         * self.voice_info[i].velocity;
             }
