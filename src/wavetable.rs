@@ -1,6 +1,6 @@
 use std::f32::consts::E;
 
-use crate::constants::{TWO_PI};
+use crate::constants::TWO_PI;
 
 type Wavetable = Vec<f32>;
 
@@ -15,13 +15,17 @@ pub struct Partial {
 
 pub fn make_sin_saw_table(table_size: usize, num_partials: usize) -> Vec<Wavetable> {
     make_wavetable(
-        table_size, 
+        table_size,
         vec![
-            vec![Partial { freq: 1.0, amp: 1.0, phase: 0.0 }],
+            vec![Partial {
+                freq: 1.0,
+                amp: 1.0,
+                phase: 0.0,
+            }],
             make_triangle_partials(num_partials),
             make_square_partials(num_partials),
             make_sawtooth_partials(num_partials),
-        ]
+        ],
     )
 }
 
@@ -53,9 +57,7 @@ fn make_triangle_partials(num_partials: usize) -> Vec<Partial> {
         }
         let partial = Partial {
             freq: index as f32,
-            amp: 
-                1.0 / usize::pow(index, 2) as f32 
-                * i32::pow(-1, index as u32 + 1) as f32,
+            amp: 1.0 / usize::pow(index, 2) as f32 * i32::pow(-1, index as u32 + 1) as f32,
             phase: 0.0,
         };
         partials.push(partial);
@@ -93,7 +95,6 @@ fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
     }
     partials
 }
-
 
 // This function combines creating a wavetable from a list of Partials, and
 // normalizing the output vector so it's maximum absolute value is 1.0. These

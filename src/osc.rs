@@ -19,17 +19,19 @@ struct Memo {
 
 impl OscReader {
     pub fn new() -> OscReader {
-        OscReader { 
-            phase: 0.0, 
+        OscReader {
+            phase: 0.0,
             memo: Memo {
                 frequency: 0.0,
                 sample_rate: 44100,
                 phase_inc: 0.0,
-            }
+            },
         }
     }
-    pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32 where 
-        F: Fn(&Vec<f32>, f32) -> f32 {
+    pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32
+    where
+        F: Fn(&Vec<f32>, f32) -> f32,
+    {
         interpolate(&table, self.phase)
     }
     // TODO: memoize frequency, sample_rate, and calculate phase inc from that.

@@ -1,11 +1,11 @@
 use std::f32::consts::E;
 
-use crate::delay::{SimpleDelay};
-use crate::envelope::{EnvReader};
-use crate::osc::{OscReader};
-use crate::wavetable;
-use crate::midi;
+use crate::delay::SimpleDelay;
+use crate::envelope::EnvReader;
 use crate::interpolation;
+use crate::midi;
+use crate::osc::OscReader;
+use crate::wavetable;
 
 pub enum OscType {
     Sawtooth,
@@ -22,7 +22,10 @@ struct NoteInfo {
 
 impl NoteInfo {
     pub fn new(freq: f32, vel: f32) -> NoteInfo {
-        NoteInfo { frequency: freq, velocity: vel }
+        NoteInfo {
+            frequency: freq,
+            velocity: vel,
+        }
     }
 }
 
@@ -32,11 +35,12 @@ pub enum Message {
     NoteOn(u8, u8),
     SetEnvAttack(f32),
     SetEnvRelease(f32),
+    SetDelayWetdry(f32),
 }
 
 struct UserControl {
     delay_feedback_amount: f32,
-    delay_length_samples: f32,
+    delay_seconds: f32,
     delay_wetdry: f32,
     envelope_attack: f32,
     envelope_release: f32,
@@ -47,8 +51,8 @@ struct UserControl {
 impl UserControl {
     pub fn new() -> UserControl {
         UserControl {
-            delay_length_samples: (44100 as f32 * 0.25),
             delay_feedback_amount: 0.7,
+            delay_seconds: 0.25,
             delay_wetdry: 0.5,
             envelope_attack: 0.01,
             envelope_release: 0.5,
@@ -100,10 +104,18 @@ impl BasicSynth {
             Message::SetOscillator(osctype) => {
                 match osctype {
                     // TODO: Implement triangle wave
-                    OscType::Sine => { self.control.wavetable_index = 0; }
-                    OscType::Triangle => {self.control.wavetable_index = 1; }
-                    OscType::Square => { self.control.wavetable_index = 2; }
-                    OscType::Sawtooth => { self.control.wavetable_index = 3; }
+                    OscType::Sine => {
+                        self.control.wavetable_index = 0;
+                    }
+                    OscType::Triangle => {
+                        self.control.wavetable_index = 1;
+                    }
+                    OscType::Square => {
+                        self.control.wavetable_index = 2;
+                    }
+                    OscType::Sawtooth => {
+                        self.control.wavetable_index = 3;
+                    }
                 }
             }
             Message::SetEnvAttack(value) => {
@@ -111,6 +123,9 @@ impl BasicSynth {
             }
             Message::SetEnvRelease(value) => {
                 self.control.envelope_release = value;
+            }
+            Message::SetDelayWetdry(value) => {
+                self.control.delay_wetdry = value;
             }
         }
     }
@@ -132,28 +147,24 @@ impl BasicSynth {
         // Read from signal generators and add to the voice output.
         for i in 0..self.table_reader.len() {
             if self.envelope_reader[i].is_active {
-                self.voice_output +=
-                    self.table_reader[i]
-                        .read(
-                            &self.wavetable[self.control.wavetable_index],
-                            interpolation::interpolate_linear,
-                            ) 
-                        * self.envelope_reader[i].read(
-                            &self.envelope_table,
-                            interpolation::envelope_linear,
-                        )
-                        * self.voice_info[i].velocity;
+                self.voice_output += self.table_reader[i].read(
+                    &self.wavetable[self.control.wavetable_index],
+                    interpolation::interpolate_linear,
+                ) * self.envelope_reader[i]
+                    .read(&self.envelope_table, interpolation::envelope_linear)
+                    * self.voice_info[i].velocity;
             }
         }
 
         let delay_output = self.delay.tick(
-            self.voice_output, 
-            self.control.delay_length_samples,
+            self.voice_output,
+            self.control.delay_seconds,
             self.control.delay_feedback_amount,
+            sample_rate,
         );
 
         (self.voice_output * (1.0 - self.control.delay_wetdry)
-        + (delay_output * self.control.delay_wetdry))
-        * self.control.volume
+            + (delay_output * self.control.delay_wetdry))
+            * self.control.volume
     }
 }

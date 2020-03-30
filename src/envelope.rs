@@ -27,17 +27,19 @@ impl EnvReader {
             is_active: false,
             current_stage: Stage::Attack,
             phase: 0.0,
-            memo: Memo { 
+            memo: Memo {
                 attack_seconds: 0.01,
                 release_seconds: 0.5,
                 attack_phase_inc: 1.0 / (44100.0 * 0.01),
                 release_phase_inc: 1.0 / (44100.0 * 0.5),
-                sample_rate: 44100, 
+                sample_rate: 44100,
             },
         }
     }
-    pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32 where
-        F : Fn(&Vec<f32>, f32) -> f32 {
+    pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32
+    where
+        F: Fn(&Vec<f32>, f32) -> f32,
+    {
         interpolate(&table, self.phase)
     }
     pub fn start(&mut self) {
@@ -49,7 +51,7 @@ impl EnvReader {
         match &self.current_stage {
             Stage::Attack => {
                 self.phase += self.memo.attack_phase_inc;
-                if self.phase >= 1.0 { 
+                if self.phase >= 1.0 {
                     // Undo the increment if it's time to switch phase.
                     self.phase -= self.memo.attack_phase_inc;
                     self.current_stage = Stage::Release;
@@ -67,17 +69,17 @@ impl EnvReader {
     fn update_memo(&mut self, attack: f32, release: f32, sample_rate: u32) {
         if sample_rate != self.memo.sample_rate {
             self.memo.sample_rate = sample_rate;
-            self.memo.attack_phase_inc = 
+            self.memo.attack_phase_inc =
                 1.0 / (self.memo.sample_rate as f32 * self.memo.attack_seconds);
-            self.memo.release_phase_inc = 
+            self.memo.release_phase_inc =
                 1.0 / (self.memo.sample_rate as f32 * self.memo.release_seconds);
         }
         if attack != self.memo.attack_seconds || release != self.memo.release_seconds {
             self.memo.attack_seconds = attack;
             self.memo.release_seconds = release;
-            self.memo.attack_phase_inc = 
+            self.memo.attack_phase_inc =
                 1.0 / (self.memo.sample_rate as f32 * self.memo.attack_seconds);
-            self.memo.release_phase_inc = 
+            self.memo.release_phase_inc =
                 1.0 / (self.memo.sample_rate as f32 * self.memo.release_seconds);
         }
     }

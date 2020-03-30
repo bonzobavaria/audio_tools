@@ -1,4 +1,4 @@
-// Create a table of MIDI note frequencies and store it in memory. Frequencies 
+// Create a table of MIDI note frequencies and store it in memory. Frequencies
 // are accessed from the table by index, which is the desired MIDI note. For
 // example, notes[64] = 329.62..., which is the frequency at C4.
 //

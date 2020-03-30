@@ -4,5 +4,5 @@ pub mod envelope;
 pub mod interpolation;
 pub mod midi;
 pub mod osc;
-pub mod wavetable;
 pub mod synth;
+pub mod wavetable;
