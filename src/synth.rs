@@ -36,6 +36,8 @@ pub enum Message {
     SetEnvAttack(f32),
     SetEnvRelease(f32),
     SetDelayWetdry(f32),
+    SetDelayFeedback(f32),
+    SetDelaySeconds(f32),
 }
 
 struct UserControl {
@@ -126,6 +128,12 @@ impl BasicSynth {
             }
             Message::SetDelayWetdry(value) => {
                 self.control.delay_wetdry = value;
+            }
+            Message::SetDelayFeedback(value) => {
+                self.control.delay_feedback_amount = value;
+            }
+            Message::SetDelaySeconds(value) => {
+                self.control.delay_seconds = value;
             }
         }
     }
