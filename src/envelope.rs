@@ -36,8 +36,9 @@ impl EnvReader {
             },
         }
     }
-    pub fn read(&self, table: &Vec<f32>) -> f32 {
-        table[(self.phase * table.len() as f32) as usize]
+    pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32 where
+        F : Fn(&Vec<f32>, f32) -> f32 {
+        interpolate(&table, self.phase)
     }
     pub fn start(&mut self) {
         self.is_active = true;

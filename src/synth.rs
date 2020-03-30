@@ -128,7 +128,10 @@ impl BasicSynth {
                             &self.wavetable[self.wavetable_index],
                             interpolation::interpolate_linear,
                             ) 
-                        * self.envelope_reader[i].read(&self.envelope_table)
+                        * self.envelope_reader[i].read(
+                            &self.envelope_table,
+                            interpolation::envelope_linear,
+                        )
                         * self.voice_info[i].velocity;
             }
         }
