@@ -10,3 +10,10 @@ generally provided on every tick, which gives callers the flexibility to
 modulate parameters in any way imaginable. This makes signal generation and
 effects modules much more flexible than trying to provide accessors for every
 possible modulation scheme, while placing more responsibility on callers.
+
+#### TODOS
+
+[ ] Create tools for parameter smoothing.
+[ ] Create a consistent interpolation scheme.
+[ ] Add a biquad filter
+[ ] Add virtual keyboard

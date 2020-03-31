@@ -1,10 +1,9 @@
 use std::f32::consts::E;
 
-use crate::delay::SimpleDelay;
-use crate::envelope::EnvReader;
-use crate::interpolation;
+use crate::delay;
+use crate::envelope;
 use crate::midi;
-use crate::osc::OscReader;
+use crate::osc;
 use crate::wavetable;
 
 pub enum OscType {
@@ -66,11 +65,11 @@ impl UserControl {
 
 pub struct BasicSynth {
     control: UserControl,
-    delay: SimpleDelay,
-    envelope_reader: Vec<EnvReader>,
+    delay: delay::SimpleDelay,
+    envelope_reader: Vec<envelope::EnvReader>,
     envelope_table: Vec<f32>,
     midi_table: Vec<f32>,
-    table_reader: Vec<OscReader>,
+    table_reader: Vec<osc::OscReader>,
     voice_info: Vec<NoteInfo>,
     voice_output: f32,
     wavetable: Vec<Vec<f32>>,
@@ -80,11 +79,11 @@ impl BasicSynth {
     pub fn new() -> BasicSynth {
         BasicSynth {
             control: UserControl::new(),
-            delay: SimpleDelay::new((44100 * 2) as usize),
-            envelope_reader: vec![EnvReader::new(); 128],
+            delay: delay::SimpleDelay::new((44100 * 2) as usize),
+            envelope_reader: vec![envelope::EnvReader::new(); 128],
             envelope_table: wavetable::make_exp_envelope(1024, E),
             midi_table: midi::make_midi_freq_table(),
-            table_reader: vec![OscReader::new(); 128],
+            table_reader: vec![osc::OscReader::new(); 128],
             voice_info: vec![NoteInfo::new(0.0, 0.0); 128],
             voice_output: 0.0,
             wavetable: wavetable::make_sin_saw_table(1024, 24),
@@ -157,9 +156,9 @@ impl BasicSynth {
             if self.envelope_reader[i].is_active {
                 self.voice_output += self.table_reader[i].read(
                     &self.wavetable[self.control.wavetable_index],
-                    interpolation::interpolate_linear,
+                    osc::linear_interpolate,
                 ) * self.envelope_reader[i]
-                    .read(&self.envelope_table, interpolation::envelope_linear)
+                    .read(&self.envelope_table, envelope::linear_interpolate)
                     * self.voice_info[i].velocity;
             }
         }
