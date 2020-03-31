@@ -38,9 +38,9 @@ impl EnvReader {
     }
     pub fn read<F>(&self, table: &Vec<f32>, interpolate: F) -> f32
     where
-        F: Fn(&Vec<f32>, f32) -> f32,
+        F: Fn(&EnvReader, &Vec<f32>) -> f32,
     {
-        interpolate(&table, self.phase)
+        interpolate(&self, table)
     }
     pub fn start(&mut self) {
         self.is_active = true;
@@ -82,5 +82,19 @@ impl EnvReader {
             self.memo.release_phase_inc =
                 1.0 / (self.memo.sample_rate as f32 * self.memo.release_seconds);
         }
+    }
+}
+
+pub fn linear_interpolate(reader: &EnvReader, table: &Vec<f32>) -> f32 {
+    // Envolopes are not circular tables, so in this interpolation policy, we
+    // don't cycle around to the beginning of the table once we reach the end.
+    let ex_phase = reader.phase * table.len() as f32;
+    let index = ex_phase as usize;
+    let fraction = ex_phase - index as f32;
+    let next_index = index + 1;
+    if next_index >= table.len() {
+        table[index]
+    } else {
+        table[index] * (1.0 - fraction) + table[next_index] * fraction
     }
 }

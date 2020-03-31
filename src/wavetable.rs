@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use crate::constants::TWO_PI;
 
 type Wavetable = Vec<f32>;
