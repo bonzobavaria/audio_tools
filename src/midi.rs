@@ -3,6 +3,8 @@
 // example, notes[64] = 329.62..., which is the frequency at C4.
 //
 // See: http://subsynth.sourceforge.net/midinote2freq.html
+
+// TODO: determine if it's necessary to wrap table creation in a function
 pub fn make_midi_freq_table() -> Vec<f32> {
     let notes: Vec<f32> = vec![
         8.1757989156,

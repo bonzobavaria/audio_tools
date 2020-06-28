@@ -116,24 +116,3 @@ impl SimpleDelay {
         }
     }
 }
-
-//pub struct DelayTap(pub f32, pub f32);
-
-//pub struct UberDelay {
-//input_buffer: CircularBuffer,
-//capture_buffer: CircularBuffer,
-//}
-
-//impl UberDelay {
-//pub fn new(buffer_size: usize) -> UberDelay {
-//UberDelay {
-//input_buffer: CircularBuffer::new(buffer_size),
-//capture_buffer: CircularBuffer::new(buffer_size),
-//}
-//}
-//// TODO: we need to recieve lots of params here and generate the multitap output
-//// TODO: Create functions to make delay taps.
-//pub fn tick(input_sample: f32, delay_taps: Vec<DelayTap>, feedback_amount: f32, pattern_length:f32) -> f32 {
-//1.0
-//}
-//}

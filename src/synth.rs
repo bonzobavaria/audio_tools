@@ -7,10 +7,10 @@ use crate::osc;
 use crate::wavetable;
 
 pub enum OscType {
-    Sawtooth,
     Sine,
-    Square,
     Triangle,
+    Square,
+    Sawtooth,
 }
 
 #[derive(Clone)]
@@ -58,7 +58,7 @@ impl UserControl {
             envelope_attack: 0.01,
             envelope_release: 0.5,
             volume: 0.5,
-            wavetable_index: 0,
+            wavetable_index: OscType::Sine as usize,
         }
     }
 }
@@ -103,21 +103,22 @@ impl BasicSynth {
                 self.envelope_reader[note as usize].start();
             }
             Message::SetOscillator(osctype) => {
-                match osctype {
+                self.control.wavetable_index = osctype as usize;
+                //match osctype {
                     // TODO: Implement triangle wave
-                    OscType::Sine => {
-                        self.control.wavetable_index = 0;
-                    }
-                    OscType::Triangle => {
-                        self.control.wavetable_index = 1;
-                    }
-                    OscType::Square => {
-                        self.control.wavetable_index = 2;
-                    }
-                    OscType::Sawtooth => {
-                        self.control.wavetable_index = 3;
-                    }
-                }
+                    //OscType::Sine => {
+                        //self.control.wavetable_index = 0;
+                    //}
+                    //OscType::Triangle => {
+                        //self.control.wavetable_index = 1;
+                    //}
+                    //OscType::Square => {
+                        //self.control.wavetable_index = 2;
+                    //}
+                    //OscType::Sawtooth => {
+                        //self.control.wavetable_index = 3;
+                    //}
+                //}
             }
             Message::SetEnvAttack(value) => {
                 self.control.envelope_attack = value;
