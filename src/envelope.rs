@@ -85,6 +85,7 @@ impl EnvReader {
     }
 }
 
+// TODO: Remove this code
 pub fn linear_interpolate(reader: &EnvReader, table: &Vec<f32>) -> f32 {
     // Envolopes are not circular tables, so in this interpolation policy, we
     // don't cycle around to the beginning of the table once we reach the end.

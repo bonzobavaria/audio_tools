@@ -1,5 +1,6 @@
 use std::f32::consts::E;
 
+use crate::biquad;
 use crate::delay;
 use crate::envelope;
 use crate::midi;
@@ -37,6 +38,7 @@ pub enum Message {
     SetDelayWetdry(f32),
     SetDelayFeedback(f32),
     SetDelaySeconds(f32),
+    SetFilterFreq(f32),
 }
 
 struct UserControl {
@@ -45,6 +47,7 @@ struct UserControl {
     delay_wetdry: f32,
     envelope_attack: f32,
     envelope_release: f32,
+    filter_freq: f32,
     volume: f32,
     wavetable_index: usize,
 }
@@ -57,6 +60,7 @@ impl UserControl {
             delay_wetdry: 0.5,
             envelope_attack: 0.01,
             envelope_release: 0.5,
+            filter_freq: 500.0,
             volume: 0.5,
             wavetable_index: OscType::Sine as usize,
         }
@@ -68,6 +72,7 @@ pub struct BasicSynth {
     delay: delay::SimpleDelay,
     envelope_reader: Vec<envelope::EnvReader>,
     envelope_table: Vec<f32>,
+    filter: biquad::Biquad,
     midi_table: Vec<f32>,
     table_reader: Vec<osc::OscReader>,
     voice_info: Vec<NoteInfo>,
@@ -82,6 +87,7 @@ impl BasicSynth {
             delay: delay::SimpleDelay::new((44100 * 2) as usize),
             envelope_reader: vec![envelope::EnvReader::new(); 128],
             envelope_table: wavetable::make_exp_envelope(1024, E),
+            filter: biquad::Biquad::new(44100),
             midi_table: midi::make_midi_freq_table(),
             table_reader: vec![osc::OscReader::new(); 128],
             voice_info: vec![NoteInfo::new(0.0, 0.0); 128],
@@ -91,11 +97,8 @@ impl BasicSynth {
     }
     pub fn send(&mut self, message: Message) {
         match message {
-            // TODO: Only 0.0 - 1.0 are acceptable inputs. Make it impossible to
-            // respesent unwanted inputs.
-            Message::SetVolume(value) => {
-                self.control.volume = f32::powf(value, 2.0);
-            }
+            // NOTE: Incoming slider range values will always be in range 0.0
+            // 1.0.
             Message::NoteOn(note, velocity) => {
                 let norm_velocity: f32 = velocity as f32 / 127.0;
                 let n = NoteInfo::new(self.midi_table[note as usize], norm_velocity);
@@ -104,21 +107,9 @@ impl BasicSynth {
             }
             Message::SetOscillator(osctype) => {
                 self.control.wavetable_index = osctype as usize;
-                //match osctype {
-                    // TODO: Implement triangle wave
-                    //OscType::Sine => {
-                        //self.control.wavetable_index = 0;
-                    //}
-                    //OscType::Triangle => {
-                        //self.control.wavetable_index = 1;
-                    //}
-                    //OscType::Square => {
-                        //self.control.wavetable_index = 2;
-                    //}
-                    //OscType::Sawtooth => {
-                        //self.control.wavetable_index = 3;
-                    //}
-                //}
+            }
+            Message::SetVolume(value) => {
+                self.control.volume = f32::powf(value, 2.0);
             }
             Message::SetEnvAttack(value) => {
                 self.control.envelope_attack = value;
@@ -134,6 +125,9 @@ impl BasicSynth {
             }
             Message::SetDelaySeconds(value) => {
                 self.control.delay_seconds = value;
+            }
+            Message::SetFilterFreq(value) => {
+                self.control.filter_freq = value * 15000.0 + 50.0;
             }
         }
     }
@@ -164,6 +158,17 @@ impl BasicSynth {
             }
         }
 
+        // Pass output through the filter
+        let filter_output = self.filter.tick(
+            self.voice_output,
+            self.control.filter_freq,
+            100.0, // temporary Q value
+            sample_rate,
+        );
+
+        // TODO: Stop storing voice_output, just build it up in the tick fn
+        self.voice_output = filter_output;
+
         let delay_output = self.delay.tick(
             self.voice_output,
             self.control.delay_seconds,
@@ -171,6 +176,7 @@ impl BasicSynth {
             sample_rate,
         );
 
+        // TODO: Create a mixer module to handle wet/dry
         (self.voice_output * (1.0 - self.control.delay_wetdry)
             + (delay_output * self.control.delay_wetdry))
             * self.control.volume

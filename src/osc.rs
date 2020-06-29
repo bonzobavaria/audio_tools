@@ -47,7 +47,6 @@ impl OscReader {
     {
         interpolate(&self, table)
     }
-    // TODO: memoize frequency, sample_rate, and calculate phase inc from that.
     pub fn increment(&mut self, freq: f32, sr: u32) {
         if freq != self.memo.frequency || sr != self.memo.sample_rate {
             self.memo.frequency = freq;

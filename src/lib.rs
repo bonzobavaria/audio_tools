@@ -1,3 +1,4 @@
+pub mod biquad;
 mod constants;
 pub mod delay;
 pub mod envelope;
