@@ -58,8 +58,8 @@ fn make_triangle_partials(num_partials: usize) -> Vec<Partial> {
             continue;
         }
         let partial = Partial {
-            freq: index as f32,
-            amp: 1.0 / usize::pow(index, 2) as f32 * i32::pow(-1, index as u32 + 1) as f32,
+               freq: index as f32,
+            amp: i32::pow(-1, (index - 1) as u32 / 2) as f32 / usize::pow(index, 2) as f32,
             phase: 0.0,
         };
         partials.push(partial);
@@ -90,7 +90,7 @@ fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
     for index in 1..num_partials {
         let partial = Partial {
             freq: index as f32,
-            amp: 1.0 / index as f32 * i32::pow(-1, index as u32 + 1) as f32,
+            amp: i32::pow(-1, index as u32 + 1) as f32 / index as f32,
             phase: 0.0,
         };
         partials.push(partial);
@@ -104,8 +104,7 @@ fn make_sawtooth_partials(num_partials: usize) -> Vec<Partial> {
 pub fn make_fourier_table_norm(table_size: usize, partials: Vec<Partial>) -> Wavetable {
     // Track maximum amplitude while creating wavetable, since we need to know
     // that to be able to normalize the wavetable.
-    let maximum_amplitude: f32 = partials.iter().map(|x| x.amp).sum();
-    let norm_factor: f32 = 1.0 / maximum_amplitude;
+    let mut max_value = 0.0;
     let ts: f32 = 1.0 / table_size as f32;
     let mut wavetable: Vec<f32> = Vec::new();
     for i in 0..table_size {
@@ -114,7 +113,12 @@ pub fn make_fourier_table_norm(table_size: usize, partials: Vec<Partial>) -> Wav
             let angle = TWO_PI * partial.freq * i as f32 * ts + partial.phase;
             sample += angle.sin() * partial.amp;
         }
-        wavetable.push(sample * norm_factor);
+        if sample.abs() > max_value { max_value = sample.abs(); }
+        wavetable.push(sample);
+    }
+    let norm_factor = 1.0 / max_value;
+    for sample in wavetable.iter_mut() {
+        *sample *= norm_factor;
     }
     wavetable
 }
