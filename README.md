@@ -11,7 +11,8 @@ modulate parameters in any way imaginable. This makes signal generation and
 effects modules much more flexible than trying to provide accessors for every
 possible modulation scheme, while placing more responsibility on callers.
 
-## Modules
+## Blocks
+**TODO**: rename from modules
 
 ### Conversion
 
@@ -40,14 +41,24 @@ Not implemented.
 
 Simple, purely functional implementations for linear and cubic interpolations
 
+## Modules 
+
+User-facing audio modules with user controls.
+
+**Most-wanted modules**:
+
++ Mixer
++ Smoother
++ State-variable Filter
++ Modal Bank, Impulse Generator
++ FM Oscillator
++ Pitch Shifter (monophonic)
++ Phase Vocoder Pitch Shifter
++ Reverb
+
+## Delay
+
 ### Synth
 
 Prebuilt synthesis modules, ready to interact with user controls and audio 
 callbacks.
-
-#### TODOS
-
-[ ] Create tools for parameter smoothing.
-[ ] Create a consistent interpolation scheme.
-[ ] Add a biquad filter
-[ ] Add virtual keyboard
