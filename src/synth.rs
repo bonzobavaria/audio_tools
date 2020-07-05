@@ -131,7 +131,7 @@ impl BasicSynth {
                 self.control.delay_seconds = value;
             }
             Message::SetFilterFreq(value) => {
-                self.control.filter_freq = value * 15000.0 + 50.0;
+                self.control.filter_freq = f32::powf(value, 2.0) * 22050.0;
             }
             Message::SetFilterQ(value) => {
                 self.control.filter_q = value * 20.0;

@@ -47,7 +47,7 @@ impl SVF {
         self.integrator_z[0] = self.alpha * hpf + bpf;
         self.integrator_z[1] = self.alpha * bpf + lpf;
 
-        bpf
+        lpf
     }
     fn calculate_coeffs(&mut self) {
         let wd = TWO_PI * self.memo.fc;
