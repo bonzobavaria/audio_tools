@@ -1,6 +1,7 @@
 use std::f32::consts::E;
 
-use crate::biquad;
+//use crate::biquad;
+use crate::svf;
 use crate::delay;
 use crate::envelope;
 use crate::midi;
@@ -39,6 +40,7 @@ pub enum Message {
     SetDelayFeedback(f32),
     SetDelaySeconds(f32),
     SetFilterFreq(f32),
+    SetFilterQ(f32),
 }
 
 struct UserControl {
@@ -48,6 +50,7 @@ struct UserControl {
     envelope_attack: f32,
     envelope_release: f32,
     filter_freq: f32,
+    filter_q: f32,
     volume: f32,
     wavetable_index: usize,
 }
@@ -60,7 +63,8 @@ impl UserControl {
             delay_wetdry: 0.5,
             envelope_attack: 0.01,
             envelope_release: 0.5,
-            filter_freq: 500.0,
+            filter_freq: 1000.0,
+            filter_q: 1.0,
             volume: 0.5,
             wavetable_index: OscType::Sine as usize,
         }
@@ -72,7 +76,7 @@ pub struct BasicSynth {
     delay: delay::SimpleDelay,
     envelope_reader: Vec<envelope::EnvReader>,
     envelope_table: Vec<f32>,
-    filter: biquad::Biquad,
+    filter: svf::SVF,
     midi_table: Vec<f32>,
     table_reader: Vec<osc::OscReader>,
     voice_info: Vec<NoteInfo>,
@@ -87,7 +91,7 @@ impl BasicSynth {
             delay: delay::SimpleDelay::new((44100 * 2) as usize),
             envelope_reader: vec![envelope::EnvReader::new(); 128],
             envelope_table: wavetable::make_exp_envelope(1024, E),
-            filter: biquad::Biquad::new(44100),
+            filter: svf::SVF::new(44100),
             midi_table: midi::make_midi_freq_table(),
             table_reader: vec![osc::OscReader::new(); 128],
             voice_info: vec![NoteInfo::new(0.0, 0.0); 128],
@@ -129,6 +133,9 @@ impl BasicSynth {
             Message::SetFilterFreq(value) => {
                 self.control.filter_freq = value * 15000.0 + 50.0;
             }
+            Message::SetFilterQ(value) => {
+                self.control.filter_q = value * 20.0;
+            }
         }
     }
     pub fn tick(&mut self, sample_rate: u32) -> f32 {
@@ -159,10 +166,10 @@ impl BasicSynth {
         }
 
         // Pass output through the filter
-        let filter_output = self.filter.tick(
+        let filter_output = self.filter.process_sample(
             self.voice_output,
             self.control.filter_freq,
-            100.0, // temporary Q value
+            self.control.filter_q,
             sample_rate,
         );
 

@@ -1,5 +1,5 @@
-pub mod biquad;
-mod constants;
+pub mod svf;
+pub mod constants;
 pub mod delay;
 pub mod envelope;
 pub mod midi;
